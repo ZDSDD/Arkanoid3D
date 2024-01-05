@@ -1,6 +1,13 @@
 import { Vector3 } from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
-import { createBall, createBricks, createPaddle, handleMouseMove, handleKeyDown, checkCollision } from './gameObjects';
+import {
+    createBall,
+    createBricks,
+    createPaddle,
+    checkCollision,
+    CheckCollisionWithBricks,
+    gameBoundaries
+} from './gameObjects';
 import * as THREE from "three";
 
 export function initializeGame(scene) {
@@ -18,21 +25,6 @@ export function initializeGame(scene) {
     for (const brick of bricks) {
         scene.add(brick)
     }
-
-// Enable pointer lock on a user action (e.g., a button click)
-    document.addEventListener('click', () => {
-        controls.lock();
-    });
-    // Handle mouse movement to update paddle position
-    document.addEventListener('mousemove', (event) => {
-        handleMouseMove(controls, event);
-    });
-
-    // Handle keyboard input
-    window.addEventListener("keydown", (event) => {
-        handleKeyDown(event);
-    });
-
     // ... (other initialization code)
     const camera = new THREE.PerspectiveCamera(
         75,
@@ -48,6 +40,18 @@ export function initializeGame(scene) {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
+    // Enable pointer lock on a user action (e.g., a button click)
+    document.addEventListener('mousedown', () => {
+        controls.lock();
+    });
+    document.addEventListener('mouseup',(event)=> {
+        console.log("mouseup, event button: " + event.button)
+        controls.unlock();
+    })
+    // Handle keyboard input
+    window.addEventListener("keydown", (event) => {
+        handleKeyDown(event);
+    });
 
 
     // Handle mouse movement to update paddle position
@@ -60,31 +64,22 @@ export function initializeGame(scene) {
             paddle.position.x += movementX * 0.05; // Adjust the sensitivity as needed
             paddle.position.z += movementY * 0.05; // Adjust the sensitivity as needed
 
-            if(paddle.position.x > wallRight){
-                paddle.position.x = wallRight - 1;
+            if(paddle.position.x > gameBoundaries.rightWall){
+                paddle.position.x = gameBoundaries.rightWall - 1;
             }
-            if(paddle.position.x < wallLeft){
-                paddle.position.x = wallLeft + 1;
+            if(paddle.position.x < gameBoundaries.leftWall){
+                paddle.position.x = gameBoundaries.leftWall + 1;
             }
-            if(paddle.position.z < wallBack){
-                paddle.position.z = wallBack + 1;
+            if(paddle.position.z < gameBoundaries.backWall){
+                paddle.position.z = gameBoundaries.backWall + 1;
             }
-            if(paddle.position.z > wallFront){
-                paddle.position.z = wallFront - 1;
+            if(paddle.position.z > gameBoundaries.frontWall){
+                paddle.position.z = gameBoundaries.frontWall - 1;
             }
         }
     });
 
-
-
-// // Set up OrbitControls
-// const orbitControls = new OrbitControls(camera, renderer.domElement);
-// orbitControls.enableDamping = true; // an animation loop is required when damping is enabled
-// orbitControls.dampingFactor = 0.25; // non-smoothed damping
-// orbitControls.screenSpacePanning = false;
-// orbitControls.maxPolarAngle = Math.PI / 2;
-
-// Handle window resize
+    // Handle window resize
     window.addEventListener("resize", () => {
         const newWidth = window.innerWidth;
         const newHeight = window.innerHeight;
@@ -122,17 +117,9 @@ export function initializeGame(scene) {
                 break;
         }
     };
-
     window.addEventListener("keydown", handleKeyDown);
 
 
-
-
-    const wallRight = 28;
-    const wallLeft = -14;
-    const wallFront = 10;
-    const wallBack = -10;
-    const ceiling = 12;
     const clock = new THREE.Clock();
 
     function UpdateBallPosition() {
@@ -142,16 +129,7 @@ export function initializeGame(scene) {
         ball.mesh.position.add(moveDirection);
     }
 
-    function CheckCollisionWithBricks() {
-        for (let i = 0; i < bricks.length; i++) {
-            if (checkCollision(ball.mesh, bricks[i])) {
-                scene.remove(bricks.at(i));
-                bricks.splice(i, 1);
-                i--;
-                ball.velocity.y = -ball.velocity.y;
-            }
-        }
-    }
+
 
     function CheckCollisionWithPaddle() {
         if (checkCollision(ball.mesh, paddle)) {
@@ -162,32 +140,32 @@ export function initializeGame(scene) {
 
 
     function CheckCollisionWithCeiling() {
-        if (ball.mesh.position.y + ball.radius > ceiling) {
+        if (ball.mesh.position.y + ball.radius > gameBoundaries.ceiling) {
             //assert the ball.mesh isn't stuck
-            ball.mesh.position.y = ceiling - ball.radius - 1;
+            ball.mesh.position.y = gameBoundaries.ceiling - ball.radius - 1;
             ball.velocity.y = -ball.velocity.y;
         }
-        if (ball.mesh.position.y - ball.radius < -ceiling) {
-            ball.mesh.position.y = -ceiling + ball.radius + 1;
+        if (ball.mesh.position.y - ball.radius < gameBoundaries.floor) {
+            ball.mesh.position.y = gameBoundaries.floor + ball.radius + 1;
             ball.velocity.y = -ball.velocity.y;
         }
     }
 
     function CheckCollisionWithWalls() {
-        if (ball.mesh.position.x + ball.radius > wallRight) {
-            ball.mesh.position.x = wallRight - ball.radius - 1;
+        if (ball.mesh.position.x + ball.radius > gameBoundaries.rightWall) {
+            ball.mesh.position.x = gameBoundaries.rightWall - ball.radius - 1;
             ball.velocity.x = -ball.velocity.x;
         }
-        if (ball.mesh.position.x - ball.radius < wallLeft) {
-            ball.mesh.position.x = wallLeft + ball.radius + 1;
+        if (ball.mesh.position.x - ball.radius < gameBoundaries.leftWall) {
+            ball.mesh.position.x = gameBoundaries.leftWall + ball.radius + 1;
             ball.velocity.x = -ball.velocity.x;
         }
-        if (ball.mesh.position.z + wallFront > wallRight) {
-            ball.mesh.position.z = wallFront - ball.radius -1
+        if (ball.mesh.position.z + gameBoundaries.frontWall > gameBoundaries.rightWall) {
+            ball.mesh.position.z = gameBoundaries.frontWall - ball.radius -1
             ball.velocity.z = -ball.velocity.z;
         }
-        if (ball.mesh.position.z - ball.radius < wallBack) {
-            ball.mesh.position.z = wallBack + ball.radius + 1
+        if (ball.mesh.position.z - ball.radius < gameBoundaries.backWall) {
+            ball.mesh.position.z = gameBoundaries.backWall + ball.radius + 1
             ball.velocity.z = -ball.velocity.z;
         }
     }
@@ -198,9 +176,13 @@ export function initializeGame(scene) {
         CheckCollisionWithCeiling();
         CheckCollisionWithPaddle();
         CheckCollisionWithWalls();
-        CheckCollisionWithBricks();
+        const hitBrickIndex = CheckCollisionWithBricks(ball.mesh, bricks);
+        if( hitBrickIndex !== -1){
+            scene.remove(bricks.at(hitBrickIndex));
+            bricks.splice(hitBrickIndex, 1);
+            ball.velocity.y = -ball.velocity.y;
 
-
+        }
         //orbitControls.update();
         renderer.render(scene, camera);
     };

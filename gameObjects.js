@@ -1,5 +1,14 @@
 import * as THREE from 'three';
-import {Vector3} from "three";
+
+export const gameBoundaries = {
+        "rightWall" : 28,
+        "leftWall" : -28,
+        "frontWall" : 10,
+        "backWall" : -10,
+        "ceiling" : 12,
+        "floor" : -12,
+}
+
 
 export function createBall(ballRadius,ballVelocity) {
     // Ball
@@ -47,14 +56,6 @@ export function createPaddle() {
     return paddle;
 }
 
-export function handleMouseMove(controls, event) {
-    // ... (mouse move handling code)
-}
-
-export function handleKeyDown(event) {
-    // ... (keyboard input handling code)
-}
-
 export function checkCollision(object1, object2) {
     const box1 = new THREE.Box3().setFromObject(object1);
     const box2 = new THREE.Box3().setFromObject(object2);
@@ -64,4 +65,13 @@ export function checkCollision(object1, object2) {
     box2.expandByScalar(0.1);
 
     return box1.intersectsBox(box2);
+}
+
+export function CheckCollisionWithBricks(ball, bricks) {
+    for (let i = 0; i < bricks.length; i++) {
+        if (checkCollision(ball, bricks[i])) {
+            return i;
+        }
+    }
+    return -1;
 }

@@ -1,8 +1,4 @@
 import * as THREE from 'three';
-import {Vector3} from 'three';
-import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-import {PointerLockControls} from 'three/addons/controls/PointerLockControls.js'
-import {createBall, createBricks} from "./gameObjects";
 import {initializeGame} from "./game";
 
 // Set up scene
