@@ -37,7 +37,7 @@ const texture = loader.load(
 // Ball
 let ballRadius = 1;
 const ballGeometry = new THREE.SphereGeometry(ballRadius, 32, 32);
-const ballMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
+const ballMaterial = new THREE.MeshPhongMaterial({color: 0xff0000});
 const ball = new THREE.Mesh(ballGeometry, ballMaterial);
 let ballVelocity = new Vector3(0, -15, 0);
 ball.position.y = 5;
@@ -91,6 +91,19 @@ document.addEventListener('mousemove', (event) => {
         // Update paddle position based on mouse movement
         paddle.position.x += movementX * 0.05; // Adjust the sensitivity as needed
         paddle.position.z += movementY * 0.05; // Adjust the sensitivity as needed
+
+        if(paddle.position.x > wallRight){
+            paddle.position.x = wallRight - 1;
+        }
+        if(paddle.position.x < wallLeft){
+            paddle.position.x = wallLeft + 1;
+        }
+        if(paddle.position.z < wallBack){
+            paddle.position.z = wallBack + 1;
+        }
+        if(paddle.position.z > wallFront){
+            paddle.position.z = wallFront - 1;
+        }
     }
 });
 
@@ -178,32 +191,14 @@ function CheckCollisionWithBricks() {
 
 function CheckCollisionWithPaddle() {
     if (checkCollision(ball, paddle)) {
-        let newColor = new THREE.Color(0xffffff);
-
-        paddle.material.color = newColor.setHex(Math.random() * 0xffffff);
-        const relativeIntersectX = ball.position.x - paddle.position.x;
-        const normalizedRelativeIntersectionX =
-            relativeIntersectX / (paddle.geometry.parameters.width / 2);
-        const baseBounceAngle = normalizedRelativeIntersectionX * (Math.PI / 4);
-        const randomOffset = (Math.random() - 0.5) * Math.PI / 8;
-        const bounceAngle = baseBounceAngle + randomOffset;
-        const speed = Math.sqrt(ballVelocity.x ** 2 + ballVelocity.y ** 2);
-        ballVelocity.x = speed * Math.sin(bounceAngle);
-        ballVelocity.y = -ballVelocity.y;
-        ballVelocity.z = speed * Math.sin(bounceAngle);
-        //ball.position.y = paddle.position.y + paddleHeight + 2;
-        //ballVelocity.z += Math.random();
-
-        ball.position.y =
-
-            console.log(ballVelocity)
+        console.log("HITTED THE PADDLE!")
     }
 }
 
 const wallRight = 28;
 const wallLeft = -14;
 const wallFront = 10;
-const wallBack = 0;
+const wallBack = -10;
 const ceiling = 12;
 
 function CheckCollisionWithCeiling() {
