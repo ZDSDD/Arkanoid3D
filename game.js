@@ -138,44 +138,48 @@ export function initializeGame(scene) {
     }
 
 
-
-    function CheckCollisionWithCeiling() {
-        if (ball.mesh.position.y + ball.radius > gameBoundaries.ceiling) {
-            //assert the ball.mesh isn't stuck
-            ball.mesh.position.y = gameBoundaries.ceiling - ball.radius - 1;
-            ball.velocity.y = -ball.velocity.y;
+    function CheckCollisionWithBoundaries(object,radius) {
+        if (object.position.x + radius > gameBoundaries.rightWall) {
+            object.position.x = gameBoundaries.rightWall - radius - 1;
+            return "right";
         }
-        if (ball.mesh.position.y - ball.radius < gameBoundaries.floor) {
-            ball.mesh.position.y = gameBoundaries.floor + ball.radius + 1;
-            ball.velocity.y = -ball.velocity.y;
+        if (object.position.x - radius < gameBoundaries.leftWall) {
+            object.position.x = gameBoundaries.leftWall + radius + 1;
+            return "left";
         }
-    }
-
-    function CheckCollisionWithWalls() {
-        if (ball.mesh.position.x + ball.radius > gameBoundaries.rightWall) {
-            ball.mesh.position.x = gameBoundaries.rightWall - ball.radius - 1;
-            ball.velocity.x = -ball.velocity.x;
+        if (object.position.z + radius > gameBoundaries.frontWall) {
+            object.position.z = gameBoundaries.frontWall - radius -1
+            return "front";
         }
-        if (ball.mesh.position.x - ball.radius < gameBoundaries.leftWall) {
-            ball.mesh.position.x = gameBoundaries.leftWall + ball.radius + 1;
-            ball.velocity.x = -ball.velocity.x;
+        if (object.position.z - radius < gameBoundaries.backWall) {
+            object.position.z = gameBoundaries.backWall + radius + 1
+            return "back";
         }
-        if (ball.mesh.position.z + gameBoundaries.frontWall > gameBoundaries.rightWall) {
-            ball.mesh.position.z = gameBoundaries.frontWall - ball.radius -1
-            ball.velocity.z = -ball.velocity.z;
+        if (object.position.y + radius > gameBoundaries.ceiling) {
+            //assert the object isn't stuck
+            object.position.y = gameBoundaries.ceiling - radius - 1;
+            return "up";
         }
-        if (ball.mesh.position.z - ball.radius < gameBoundaries.backWall) {
-            ball.mesh.position.z = gameBoundaries.backWall + ball.radius + 1
-            ball.velocity.z = -ball.velocity.z;
+        if (object.position.y - radius < gameBoundaries.floor) {
+            object.position.y = gameBoundaries.floor + radius + 1;
+            return "down"
         }
+        return "";
     }
 // Game loop
     const animate = () => {
         requestAnimationFrame(animate);
         UpdateBallPosition();
-        CheckCollisionWithCeiling();
         CheckCollisionWithPaddle();
-        CheckCollisionWithWalls();
+        const hitWall = CheckCollisionWithBoundaries(ball.mesh,ball.radius);
+        if(hitWall === "back" || hitWall === "front"){
+            ball.velocity.z = -ball.velocity.z;
+        }else if(hitWall === "left" || hitWall ==="right"){
+            ball.velocity.x = -ball.velocity.x;
+        }else if (hitWall !== ""){
+            ball.velocity.y = -ball.velocity.y;
+        }
+        
         const hitBrickIndex = CheckCollisionWithBricks(ball.mesh, bricks);
         if( hitBrickIndex !== -1){
             scene.remove(bricks.at(hitBrickIndex));
