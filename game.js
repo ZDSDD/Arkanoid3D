@@ -16,7 +16,7 @@ export function initializeGame(scene) {
     let ballVelocity = new Vector3(0, -15, 0);
     let ball = createBall(ballRadius,ballVelocity)
     
-    let bricks = createBricks()
+    let bricks = createBricks(5,5,5)
     let paddle = createPaddle()
     const controls = new PointerLockControls(ball.mesh, document.body);
     scene.add(controls.getObject());

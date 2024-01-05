@@ -22,7 +22,7 @@ export function createBall(ballRadius,ballVelocity) {
             "radius":ballRadius};
 }
 
-export function createBricks() {
+export function createBricks(xCount,yCount,zCount) {
     // Bricks
     const brickGeometry = new THREE.BoxGeometry(4, 1, 1);
     const brickMaterial = new THREE.MeshPhongMaterial({
@@ -30,12 +30,14 @@ export function createBricks() {
     });
 
     let bricks = []
-
-    for (let i = 0; i < 5; i++) {
-        for (let j = 0; j < 5; j++) {
-            const brick = new THREE.Mesh(brickGeometry, brickMaterial);
-            brick.position.set(i * 6 - 12, 10, j * 2);
-            bricks.push(brick);
+    for(let y = 0; y < yCount; y ++)
+    {
+        for (let i = 0; i < xCount; i++) {
+            for (let j = 0; j < zCount; j++) {
+                const brick = new THREE.Mesh(brickGeometry, brickMaterial);
+                brick.position.set(i * 6 - 12, 2 * y, j * 2);
+                bricks.push(brick);
+            }
         }
     }
     return bricks;
