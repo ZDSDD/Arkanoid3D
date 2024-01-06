@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import {Vector3} from "three";
 
 export const gameBoundaries = {
         "rightWall" : 18,
@@ -15,9 +14,11 @@ export function createBall(ballRadius,ballVelocity) {
     // Ball
     const ballGeometry = new THREE.SphereGeometry(ballRadius, 32, 32);
     const ballMaterial = new THREE.MeshPhongMaterial({color: 0xff0000});
-    const ball = new THREE.Mesh(ballGeometry, ballMaterial);
-    ball.position.y = 5;
+    let ball = new THREE.Mesh(ballGeometry, ballMaterial);
+
+    ball.position.y = gameBoundaries.floor + 5;
     ball.castShadow = true;
+    ball.receiveShadow = true;
     return {"mesh": ball,
             "velocity":ballVelocity,
             "radius":ballRadius};
@@ -57,6 +58,7 @@ export function createPaddle() {
     const paddle = new THREE.Mesh(paddleGeometry, paddleMaterial);
     paddle.position.y = gameBoundaries.floor;
     paddle.castShadow = true;
+    paddle.receiveShadow = true;
     return paddle;
 }
 export function createFloor(){
@@ -72,7 +74,7 @@ export function createFloor(){
 
     floorMesh.rotation.x = (-Math.PI / 2); // Rotate the plane to be horizontal
     floorMesh.position.y = -13
-    //floorMesh.material.fog = true;
+    floorMesh.receiveShadow = false;
     return floorMesh
 }
 export function checkCollision(object1, object2) {
@@ -86,18 +88,3 @@ export function checkCollision(object1, object2) {
     return box1.intersectsBox(box2);
 }
 
-export function CheckCollisionWithBricks(ball, bricks) {
-    for (let i = 0; i < bricks.length; i++) {
-        if (checkCollision(ball, bricks[i])) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-let ballRadius = 1;
-let ballVelocity = new Vector3(0, -15, 0);
-export let ball = createBall(ballRadius,ballVelocity);
-export let bricks = createBricks(5,5,5);
-export let paddle = createPaddle();
-export let floor = createFloor();
