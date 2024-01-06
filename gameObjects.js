@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {Vector3} from "three";
 
 export const gameBoundaries = {
         "rightWall" : 28,
@@ -54,10 +55,25 @@ export function createPaddle() {
     });
 
     const paddle = new THREE.Mesh(paddleGeometry, paddleMaterial);
-    paddle.position.y = -10;
+    paddle.position.y = gameBoundaries.floor;
     return paddle;
 }
+export function createFloor(){
 
+    const planeSize = 100; // Adjust the size as needed
+    const planeGeometry = new THREE.PlaneGeometry(planeSize, planeSize, 10, 10);
+    const textureLoader = new THREE.TextureLoader();
+    const floorTexture = textureLoader.load('resources/Glow-Galaxy-Texture-Space-wallpaper_1600x1200.jpg'); // Replace with the path to your texture
+
+    const floorMaterial = new THREE.MeshPhongMaterial({ map: floorTexture, side: THREE.DoubleSide });
+
+    const floorMesh = new THREE.Mesh(planeGeometry, floorMaterial);
+
+    floorMesh.rotation.x = (-Math.PI / 2); // Rotate the plane to be horizontal
+    floorMesh.position.y = -13
+    //floorMesh.material.fog = true;
+    return floorMesh
+}
 export function checkCollision(object1, object2) {
     const box1 = new THREE.Box3().setFromObject(object1);
     const box2 = new THREE.Box3().setFromObject(object2);
@@ -77,3 +93,10 @@ export function CheckCollisionWithBricks(ball, bricks) {
     }
     return -1;
 }
+
+let ballRadius = 1;
+let ballVelocity = new Vector3(0, -15, 0);
+export let ball = createBall(ballRadius,ballVelocity);
+export let bricks = createBricks(5,5,5);
+export let paddle = createPaddle();
+export let floor = createFloor();

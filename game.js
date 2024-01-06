@@ -1,38 +1,15 @@
 import { Vector3 } from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import {
-    createBall,
-    createBricks,
-    createPaddle,
     checkCollision,
     CheckCollisionWithBricks,
-    gameBoundaries
+    gameBoundaries, createFloor, ball, paddle, bricks,floor
 } from './gameObjects';
 import * as THREE from "three";
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 export function initializeGame(scene) {
-    // Set up pointer lock controls
-    let ballRadius = 1;
-    let ballVelocity = new Vector3(0, -15, 0);
-    let ball = createBall(ballRadius,ballVelocity)
-    
-    let bricks = createBricks(5,5,5)
-    let paddle = createPaddle()
-    const controls = new PointerLockControls(ball.mesh, document.body);
-    scene.add(controls.getObject());
-    scene.add(ball.mesh);
-    scene.add(paddle);
-    for (const brick of bricks) {
-        scene.add(brick)
-    }
-    // ... (other initialization code)
-    const camera = new THREE.PerspectiveCamera(
-        75,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-    );
-    camera.position.z = 30;
+
     const renderer = new THREE.WebGLRenderer({
         antialias: true,
         alpha: true,
@@ -40,43 +17,24 @@ export function initializeGame(scene) {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // Enable pointer lock on a user action (e.g., a button click)
-    document.addEventListener('mousedown', () => {
-        controls.lock();
-    });
-    document.addEventListener('mouseup',(event)=> {
-        console.log("mouseup, event button: " + event.button)
-        controls.unlock();
-    })
+    const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+    );
+    camera.position.z = 30;
+    camera.rotateX(-.5)
+    camera.position.y = 20;
+
+    const controls = new OrbitControls( camera, renderer.domElement );
+    controls.enableDamping = true;
+
+    scene.add(ball.mesh, paddle, floor, ...bricks);
+
     // Handle keyboard input
     window.addEventListener("keydown", (event) => {
         handleKeyDown(event);
-    });
-
-
-    // Handle mouse movement to update paddle position
-    document.addEventListener('mousemove', (event) => {
-        if (controls.isLocked) {
-            const movementX = event.movementX
-            const movementY = event.movementY
-
-            // Update paddle position based on mouse movement
-            paddle.position.x += movementX * 0.05; // Adjust the sensitivity as needed
-            paddle.position.z += movementY * 0.05; // Adjust the sensitivity as needed
-
-            if(paddle.position.x > gameBoundaries.rightWall){
-                paddle.position.x = gameBoundaries.rightWall - 1;
-            }
-            if(paddle.position.x < gameBoundaries.leftWall){
-                paddle.position.x = gameBoundaries.leftWall + 1;
-            }
-            if(paddle.position.z < gameBoundaries.backWall){
-                paddle.position.z = gameBoundaries.backWall + 1;
-            }
-            if(paddle.position.z > gameBoundaries.frontWall){
-                paddle.position.z = gameBoundaries.frontWall - 1;
-            }
-        }
     });
 
     // Handle window resize
@@ -91,32 +49,50 @@ export function initializeGame(scene) {
     });
 
 // Handle keyboard input
-    const handleKeyDown = (event) => {
+    function handleKeyDown(event) {
+        const moveSpeed = 1;
+
         switch (event.key) {
-            case "ArrowLeft":
-                paddle.position.x -= 1;
+            case 'd':
+                movePaddle('forward', moveSpeed);
                 break;
-            case "ArrowRight":
-                paddle.position.x += 1;
+            case 'w':
+                movePaddle('left', moveSpeed);
                 break;
-            case "ArrowUp":
-                paddle.position.z -= 1;
+            case 'a':
+                movePaddle('backward', moveSpeed);
                 break;
-            case "ArrowDown":
-                paddle.position.z += 1;
-                break;
-            case "Control":
-                console.log(`ball.mesh.position`)
-                console.log(ball.mesh.position)
-                console.log(`ball.velocity`)
-                console.log(ball.velocity)
-                break;
-            case "w":
-                console.log("W pressed, ball.mesh y velocity increased by 1")
-                ball.velocity.setY(ball.velocity.y + 1);
+            case 's':
+                movePaddle('right', moveSpeed);
                 break;
         }
-    };
+        CheckCollisionWithBoundaries(paddle,2.5)
+    }
+
+    function movePaddle(direction, speed) {
+        const target = controls.target;
+        const angle = Math.atan2(target.z - camera.position.z, target.x - camera.position.x);
+
+
+        switch (direction) {
+            case 'forward':
+                paddle.position.x -= speed * Math.sin(angle);
+                paddle.position.z -= speed * Math.cos(angle);
+                break;
+            case 'backward':
+                paddle.position.x += speed * Math.sin(angle);
+                paddle.position.z += speed * Math.cos(angle);
+                break;
+            case 'left':
+                paddle.position.x -= speed * Math.cos(angle);
+                paddle.position.z += speed * Math.sin(angle);
+                break;
+            case 'right':
+                paddle.position.x += speed * Math.cos(angle);
+                paddle.position.z -= speed * Math.sin(angle);
+                break;
+        }
+    }
     window.addEventListener("keydown", handleKeyDown);
 
 
@@ -187,7 +163,7 @@ export function initializeGame(scene) {
             ball.velocity.y = -ball.velocity.y;
 
         }
-        //orbitControls.update();
+        controls.update();
         renderer.render(scene, camera);
     };
 
