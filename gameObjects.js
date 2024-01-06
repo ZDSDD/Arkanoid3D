@@ -2,10 +2,10 @@ import * as THREE from 'three';
 import {Vector3} from "three";
 
 export const gameBoundaries = {
-        "rightWall" : 28,
-        "leftWall" : -28,
-        "frontWall" : 10,
-        "backWall" : -10,
+        "rightWall" : 18,
+        "leftWall" : -18,
+        "frontWall" : 12,
+        "backWall" : -2,
         "ceiling" : 12,
         "floor" : -12,
 }
@@ -17,7 +17,7 @@ export function createBall(ballRadius,ballVelocity) {
     const ballMaterial = new THREE.MeshPhongMaterial({color: 0xff0000});
     const ball = new THREE.Mesh(ballGeometry, ballMaterial);
     ball.position.y = 5;
-
+    ball.castShadow = true;
     return {"mesh": ball,
             "velocity":ballVelocity,
             "radius":ballRadius};
@@ -56,6 +56,7 @@ export function createPaddle() {
 
     const paddle = new THREE.Mesh(paddleGeometry, paddleMaterial);
     paddle.position.y = gameBoundaries.floor;
+    paddle.castShadow = true;
     return paddle;
 }
 export function createFloor(){

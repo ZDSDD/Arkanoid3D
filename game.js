@@ -108,8 +108,9 @@ export function initializeGame(scene) {
 
 
     function CheckCollisionWithPaddle() {
-        if (checkCollision(ball.mesh, paddle)) {
-            console.log("HITTED THE PADDLE!")
+        if(checkCollision(paddle,ball.mesh)){
+            ball.velocity.y = - ball.velocity.y;
+            ball.mesh.position.y = paddle.position.y + 2.6;
         }
     }
 

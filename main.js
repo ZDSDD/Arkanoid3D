@@ -8,6 +8,7 @@ const scene = new THREE.Scene();
     const intensity = 3;
     const light = new THREE.DirectionalLight(color, intensity);
     light.position.set(-1, 2, 4);
+    light.castShadow = true;
     scene.add(light);
 }
 
