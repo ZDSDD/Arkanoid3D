@@ -6,6 +6,9 @@ import {
 import * as THREE from "three";
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {randFloat} from "three/src/math/MathUtils";
+import Stats from 'three/addons/libs/stats.module.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
 
 export function initializeGame(scene) {
     function CheckCollisionWithBricks(ball, bricks) {
@@ -30,10 +33,22 @@ export function initializeGame(scene) {
         antialias: true,
         alpha: true,
     });
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.BasicShadowMap;
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
+
+    const stats = new Stats();
+    document.body.appendChild( stats.dom );
+
+
+    let gameOptions = {
+        paddleMoveSpeed: 0.5,
+        ballMoveSpeed:1
+    }
+    const gui = new GUI();
+
+    gui.add(gameOptions,'paddleMoveSpeed',0.3,2.0,0.1);
+    gui.add(gameOptions,'ballMoveSpeed',0.05,1,0.01);
+
 
     const camera = new THREE.PerspectiveCamera(
         75,
@@ -51,9 +66,7 @@ export function initializeGame(scene) {
     scene.add(ball.mesh, paddle, floor, ...bricks);
 
     // Handle keyboard input
-    window.addEventListener("keydown", (event) => {
-        handleKeyDown(event);
-    });
+    window.addEventListener("keydown",handleKeyDown);
 
     // Handle window resize
     window.addEventListener("resize", () => {
@@ -68,20 +81,19 @@ export function initializeGame(scene) {
 
 // Handle keyboard input
     function handleKeyDown(event) {
-        const moveSpeed = 0.3;
 
         switch (event.key) {
             case 'w':
-                movePaddle('forward', moveSpeed);
+                movePaddle('forward', gameOptions.paddleMoveSpeed);
                 break;
             case 'a':
-                movePaddle('left', moveSpeed);
+                movePaddle('left', gameOptions.paddleMoveSpeed);
                 break;
             case 's':
-                movePaddle('backward', moveSpeed);
+                movePaddle('backward', gameOptions.paddleMoveSpeed);
                 break;
             case 'd':
-                movePaddle('right', moveSpeed);
+                movePaddle('right', gameOptions.paddleMoveSpeed);
                 break;
             case " ":
                 gamePaused = false;
@@ -137,7 +149,7 @@ export function initializeGame(scene) {
     function UpdateBallPosition() {
         let moveDirection = new Vector3(0, 0, 0);
         moveDirection.copy(ball.velocity)
-        moveDirection.multiplyScalar(clock.getDelta());
+        moveDirection.multiplyScalar(clock.getDelta() * (gameOptions.ballMoveSpeed));
         ball.mesh.position.add(moveDirection);
     }
 
@@ -218,6 +230,7 @@ export function initializeGame(scene) {
             updateBall();
         }
         controls.update();
+        stats.update();
         renderer.render(scene, camera);
     };
 

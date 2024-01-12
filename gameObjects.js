@@ -17,8 +17,6 @@ export function createBall(ballRadius,ballVelocity) {
     let ball = new THREE.Mesh(ballGeometry, ballMaterial);
 
     ball.position.y = gameBoundaries.floor + 5;
-    ball.castShadow = true;
-    ball.receiveShadow = true;
     return {"mesh": ball,
             "velocity":ballVelocity,
             "radius":ballRadius};
@@ -57,8 +55,6 @@ export function createPaddle() {
 
     const paddle = new THREE.Mesh(paddleGeometry, paddleMaterial);
     paddle.position.y = gameBoundaries.floor;
-    paddle.castShadow = true;
-    paddle.receiveShadow = true;
     return paddle;
 }
 export function createFloor(){
@@ -68,13 +64,16 @@ export function createFloor(){
     const textureLoader = new THREE.TextureLoader();
     const floorTexture = textureLoader.load('resources/Glow-Galaxy-Texture-Space-wallpaper_1600x1200.jpg'); // Replace with the path to your texture
 
-    const floorMaterial = new THREE.MeshPhongMaterial({ map: floorTexture, side: THREE.DoubleSide });
+    const floorMaterial = new THREE.MeshPhongMaterial({
+        map: floorTexture,
+        opacity:0.5,
+        transparent:true,
+        side: THREE.FrontSide });
 
     const floorMesh = new THREE.Mesh(planeGeometry, floorMaterial);
 
     floorMesh.rotation.x = (-Math.PI / 2); // Rotate the plane to be horizontal
     floorMesh.position.y = -13
-    floorMesh.receiveShadow = false;
     return floorMesh
 }
 export function checkCollision(object1, object2) {
