@@ -1,26 +1,47 @@
 import {Vector3} from 'three';
 import {
-    checkCollision,
     gameBoundaries, createFloor, createBall, createBricks, createPaddle
 } from './gameObjects';
 import * as THREE from "three";
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-import {randFloat} from "three/src/math/MathUtils";
 import Stats from 'three/addons/libs/stats.module.js';
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import {GUI} from 'three/addons/libs/lil-gui.module.min.js';
+import {CheckCollisionWithBoundaries, CheckCollisionWithBricks, CheckCollisionWithPaddle} from "./CollisionHandler";
 
 
-export function initializeGame(scene) {
-    function CheckCollisionWithBricks(ball, bricks) {
-        for (let i = 0; i < bricks.length; i++) {
-            if (checkCollision(ball, bricks[i])) {
-                return i;
-            }
-        }
-        return -1;
-    }
+export function initializeGame() {
+
+    let scene = new THREE.Scene();
+
+    let light = new THREE.DirectionalLight(0xFFFFFF, 2.0);
+    light.position.set(20, 100, 10);
+    light.target.position.set(0, 0, 0);
+    light.castShadow = true;
+    light.shadow.bias = -0.001;
+    light.shadow.mapSize.width = 2048;
+    light.shadow.mapSize.height = 2048;
+    light.shadow.camera.near = 0.1;
+    light.shadow.camera.far = 500.0;
+    light.shadow.camera.near = 0.5;
+    light.shadow.camera.far = 500.0;
+    light.shadow.camera.left = 100;
+    light.shadow.camera.right = -100;
+    light.shadow.camera.top = 100;
+    light.shadow.camera.bottom = -100;
+    scene.add(light);
+
+    let ambientLight = new THREE.AmbientLight(0x101010, 5);
+    scene.add(ambientLight);
 
 
+    const loader = new THREE.TextureLoader();
+    const texture = loader.load(
+        'resources/jpegPIA15482.jpg',
+        () => {
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            scene.background = texture;
+        });
 
     let ballRadius = 1;
     let initialBallVelocity = new Vector3(0, 10, 0);
@@ -28,27 +49,53 @@ export function initializeGame(scene) {
     let bricks = createBricks(5, 5, 5);
     let paddle = createPaddle();
     let floor = createFloor();
+    floor.receiveShadow = true;
+    paddle.receiveShadow = true;
+    ball.mesh.receiveShadow = true;
+    paddle.castShadow = true;
+    ball.mesh.castShadow = true;
 
     const renderer = new THREE.WebGLRenderer({
         antialias: true,
         alpha: true,
     });
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
     const stats = new Stats();
-    document.body.appendChild( stats.dom );
+    document.body.appendChild(stats.dom);
 
 
     let gameOptions = {
         paddleMoveSpeed: 0.5,
-        ballMoveSpeed:1
+        ballMoveSpeed: 1
+    }
+
+    let lightOptions = {
+        lightIntensity: 1,
+        color_red: 1,
+        color_green: 1,
+        color_blue: 1
+
     }
     const gui = new GUI();
 
-    gui.add(gameOptions,'paddleMoveSpeed',0.3,2.0,0.1);
-    gui.add(gameOptions,'ballMoveSpeed',0.05,1,0.01);
+    const gameplay_options = gui.addFolder('gameplay_options')
+    gameplay_options.add(gameOptions, 'paddleMoveSpeed', 0.3, 2.0, 0.1)
+    gameplay_options.add(gameOptions, 'ballMoveSpeed', 0.05, 1, 0.01)
 
+    const light_options = gui.addFolder('light_options')
+    light_options.add(lightOptions, 'lightIntensity', 0.05, 50, 0.01).onChange(() => light.intensity = lightOptions.lightIntensity)
+    light_options.add(lightOptions, 'color_red', 0x0, 1, 0.01).onChange(setUpLightColor)
+    light_options.add(lightOptions, 'color_green', 0x0, 1, 0.01).onChange(setUpLightColor)
+    light_options.add(lightOptions, 'color_blue', 0x0, 1, 0.01).onChange(setUpLightColor)
+
+
+    function setUpLightColor() {
+        light.color.set(lightOptions.color_red, lightOptions.color_green, lightOptions.color_blue)
+    }
 
     const camera = new THREE.PerspectiveCamera(
         75,
@@ -66,7 +113,7 @@ export function initializeGame(scene) {
     scene.add(ball.mesh, paddle, floor, ...bricks);
 
     // Handle keyboard input
-    window.addEventListener("keydown",handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
 
     // Handle window resize
     window.addEventListener("resize", () => {
@@ -106,7 +153,8 @@ export function initializeGame(scene) {
         CheckCollisionWithBoundaries(paddle, 1)
     }
 
-    const initialBallPosition = new THREE.Vector3(0,gameBoundaries.floor + 5,0);
+    const initialBallPosition = new THREE.Vector3(0, gameBoundaries.floor + 5, 0);
+
     function restartGame() {
         // Remove the ball from the scene
         ball.mesh.position.copy(initialBallPosition);
@@ -116,7 +164,7 @@ export function initializeGame(scene) {
             scene.remove(brick);
         }
         bricks = []
-        bricks = createBricks(5,5,5);
+        bricks = createBricks(5, 5, 5);
         gameOver = false;
         gamePaused = true;
         scene.add(...bricks);
@@ -154,44 +202,6 @@ export function initializeGame(scene) {
     }
 
 
-    function CheckCollisionWithPaddle() {
-        if (checkCollision(paddle, ball.mesh)) {
-            ball.velocity.y = -ball.velocity.y;
-            ball.mesh.position.y = paddle.position.y + 2.6;
-            ball.velocity.x = ball.velocity.x + randFloat(-1,1);
-            ball.velocity.z = ball.velocity.z + randFloat(-1,1);
-        }
-    }
-
-    function CheckCollisionWithBoundaries(object, radius) {
-        if (object.position.x + radius > gameBoundaries.rightWall) {
-            object.position.x = gameBoundaries.rightWall - radius - 0.1;
-            return "right";
-        }
-        if (object.position.x - radius < gameBoundaries.leftWall) {
-            object.position.x = gameBoundaries.leftWall + radius + 0.1;
-            return "left";
-        }
-        if (object.position.z + radius > gameBoundaries.frontWall) {
-            object.position.z = gameBoundaries.frontWall - radius - 0.1
-            return "front";
-        }
-        if (object.position.z - radius < gameBoundaries.backWall) {
-            object.position.z = gameBoundaries.backWall + radius+ 0.1
-            return "back";
-        }
-        if (object.position.y + radius > gameBoundaries.ceiling) {
-            //assert the object isn't stuck
-            object.position.y = gameBoundaries.ceiling - radius - 0.1;
-            return "up";
-        }
-        if (object.position.y - radius < gameBoundaries.floor) {
-            object.position.y = gameBoundaries.floor + radius + 0.1;
-            return "down"
-        }
-        return "";
-    }
-
     function removeBrick(hitBrickIndex) {
         scene.remove(bricks.at(hitBrickIndex));
         bricks.splice(hitBrickIndex, 1);
@@ -202,7 +212,7 @@ export function initializeGame(scene) {
 
     function updateBall() {
         UpdateBallPosition();
-        CheckCollisionWithPaddle();
+        CheckCollisionWithPaddle(paddle, ball);
         const hitWall = CheckCollisionWithBoundaries(ball.mesh, ball.radius);
         if (hitWall === "back" || hitWall === "front") {
             ball.velocity.z = -ball.velocity.z;

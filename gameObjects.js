@@ -35,6 +35,7 @@ export function createBricks(xCount,yCount,zCount) {
         for (let i = 0; i < xCount; i++) {
             for (let j = 0; j < zCount; j++) {
                 const brick = new THREE.Mesh(brickGeometry, brickMaterial);
+                brick.receiveShadow = true;
                 brick.position.set(i * 6 - 12, 2 * y, j * 2);
                 bricks.push(brick);
             }
@@ -64,7 +65,7 @@ export function createFloor(){
     const textureLoader = new THREE.TextureLoader();
     const floorTexture = textureLoader.load('resources/Glow-Galaxy-Texture-Space-wallpaper_1600x1200.jpg'); // Replace with the path to your texture
 
-    const floorMaterial = new THREE.MeshPhongMaterial({
+    const floorMaterial = new THREE.MeshStandardMaterial({
         map: floorTexture,
         opacity:0.5,
         transparent:true,
