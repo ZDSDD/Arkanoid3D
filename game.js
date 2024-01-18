@@ -165,28 +165,28 @@ export function initializeGame(scene) {
 
     function CheckCollisionWithBoundaries(object, radius) {
         if (object.position.x + radius > gameBoundaries.rightWall) {
-            object.position.x = gameBoundaries.rightWall - radius - 1;
+            object.position.x = gameBoundaries.rightWall - radius - 0.1;
             return "right";
         }
         if (object.position.x - radius < gameBoundaries.leftWall) {
-            object.position.x = gameBoundaries.leftWall + radius + 1;
+            object.position.x = gameBoundaries.leftWall + radius + 0.1;
             return "left";
         }
         if (object.position.z + radius > gameBoundaries.frontWall) {
-            object.position.z = gameBoundaries.frontWall - radius - 1
+            object.position.z = gameBoundaries.frontWall - radius - 0.1
             return "front";
         }
         if (object.position.z - radius < gameBoundaries.backWall) {
-            object.position.z = gameBoundaries.backWall + radius + 1
+            object.position.z = gameBoundaries.backWall + radius+ 0.1
             return "back";
         }
         if (object.position.y + radius > gameBoundaries.ceiling) {
             //assert the object isn't stuck
-            object.position.y = gameBoundaries.ceiling - radius - 1;
+            object.position.y = gameBoundaries.ceiling - radius - 0.1;
             return "up";
         }
         if (object.position.y - radius < gameBoundaries.floor) {
-            object.position.y = gameBoundaries.floor + radius + 1;
+            object.position.y = gameBoundaries.floor + radius + 0.1;
             return "down"
         }
         return "";
