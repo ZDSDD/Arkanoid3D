@@ -10,6 +10,18 @@ import { CheckCollisionWithBoundaries as checkCollisionWithBoundaries, CheckColl
 import { AudioContext } from 'three';
 
 
+export function startGame(){
+
+// Assuming this is triggered by a button click
+document.getElementById('startButton').addEventListener('click', function() {
+    initializeGame();
+    // Your audio playback code here
+    //ambientSound.play();
+});
+
+}
+
+
 export function initializeGame() {
 
     let scene = new THREE.Scene();
@@ -123,11 +135,6 @@ export function initializeGame() {
         ambientSound.play();
     });
 
-// Assuming this is triggered by a button click
-document.getElementById('startButton').addEventListener('click', function() {
-    // Your audio playback code here
-    ambientSound.play();
-});
 
     
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -243,14 +250,13 @@ document.getElementById('startButton').addEventListener('click', function() {
         stats.update();
         renderer.render(scene, camera);
     };
-
     animate();
 
     function handleCollision(){
 
         if(1 === CheckCollisionWithPaddle(paddle, ball)){
             paddle.material.color.setHex(Math.random() * 0xFFFFFF)
-            sound.play();
+            //bounceSound.play();
         }
 
         const hitWall = checkCollisionWithBoundaries(ball.mesh, ball.radius);

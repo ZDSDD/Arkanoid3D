@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import {initializeGame} from "./game";
+import {startGame} from "./game";
 
-initializeGame()
+startGame()
 
 
