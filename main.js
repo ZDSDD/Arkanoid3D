@@ -1,6 +1,13 @@
 import * as THREE from 'three';
-import {startGame} from "./game";
+import {initializeGame} from "./game";
 
-startGame()
+const btn = document.getElementById('play-button');
+
+btn.addEventListener('click', () => {
+  // 👇️ hide button
+  btn.style.display = 'none';
+  initializeGame()
+});
+
 
 

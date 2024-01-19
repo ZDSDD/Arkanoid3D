@@ -13,7 +13,8 @@ export const gameBoundaries = {
 export function createBall(ballRadius,ballVelocity) {
     // Ball
     const ballGeometry = new THREE.SphereGeometry(ballRadius, 32, 32);
-    const ballMaterial = new THREE.MeshPhongMaterial({color: 0xff0000});
+    
+    const ballMaterial = new THREE.MeshPhongMaterial({color: new THREE.Color("hsl(0, 100%, 50%)")});
     let ball = new THREE.Mesh(ballGeometry, ballMaterial);
 
     ball.position.y = gameBoundaries.floor + 5;

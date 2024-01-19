@@ -14,8 +14,8 @@ export function CheckCollisionWithPaddle(paddle, ball){
     if (checkCollision(paddle, ball.mesh)) {
         ball.velocity.y = -ball.velocity.y;
         ball.mesh.position.y = paddle.position.y + 2;
-        ball.velocity.x = ball.velocity.x + randFloat(-1,1);
-        ball.velocity.z = ball.velocity.z + randFloat(-1,1);
+        ball.velocity.x = ball.velocity.x + randFloat(-2,2);
+        ball.velocity.z = ball.velocity.z + randFloat(-2,2);
         return 1;
     }
     return 0;

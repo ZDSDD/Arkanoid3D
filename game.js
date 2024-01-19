@@ -10,22 +10,29 @@ import { CheckCollisionWithBoundaries as checkCollisionWithBoundaries, CheckColl
 import { AudioContext } from 'three';
 
 
-export function startGame(){
-
-// Assuming this is triggered by a button click
-document.getElementById('startButton').addEventListener('click', function() {
-    initializeGame();
-    // Your audio playback code here
-    //ambientSound.play();
-});
-
-}
-
-
 export function initializeGame() {
+    let score = 0;
+
+    const scoreElement = document.getElementById('score-container')
+
+    function addToScore(points) {
+        score += points;
+        scoreElement.innerHTML = `<span style="color: #ffcc00;">Score:</span> ${score}`;
+    }
+
+    const brickLeftElement = document.getElementById('brick-left-container');
+
+    function initUI() {
+        addToScore(0);
+        updateBrickLeft()
+    }
+
+    function updateBrickLeft() {
+        brickLeftElement.innerHTML = `<span style="color: #deface;">bricks left</span>: ${bricks.length}`
+    }
 
     let scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x01131e, 0.025);
+    scene.fog = new THREE.FogExp2(0x01131e, 0.005);
     let light = new THREE.DirectionalLight(0xFFFFFF, 2.0);
     light.position.set(20, 100, 10);
     light.target.position.set(0, 0, 0);
@@ -82,8 +89,8 @@ export function initializeGame() {
 
 
     let gameOptions = {
-        paddleMoveSpeed: 0.5,
-        ballMoveSpeed: 1
+        paddleMoveSpeed: 1.1,
+        ballMoveSpeed: 0.7
     }
 
     let lightOptions = {
@@ -93,18 +100,38 @@ export function initializeGame() {
         color_blue: 1
 
     }
-    const gui = new GUI();
+    let soundOptions = {
+        ambientSoundVolume: 0.5,
+        bounceSoundVolume: 0.3,
+        gameOverSoundVolume: 0.8,
+        wallBounceSoundVolume: 1.0,
+        refDistance: 20,
+        pointSoundVolume: 0.3,
+        brickSoundVolume: 0.3
+    }
 
-    const gameplay_options = gui.addFolder('gameplay_options')
-    gameplay_options.add(gameOptions, 'paddleMoveSpeed', 0.3, 2.0, 0.1)
-    gameplay_options.add(gameOptions, 'ballMoveSpeed', 0.05, 1, 0.01)
+    // GUI
 
-    const light_options = gui.addFolder('light_options')
-    light_options.add(lightOptions, 'lightIntensity', 0.05, 50, 0.01).onChange(() => light.intensity = lightOptions.lightIntensity)
-    light_options.add(lightOptions, 'color_red', 0x0, 1, 0.01).name("Red color").onChange(setUpLightColor)
-    light_options.add(lightOptions, 'color_green', 0x0, 1, 0.01).onChange(setUpLightColor)
-    light_options.add(lightOptions, 'color_blue', 0x0, 1, 0.01).onChange(setUpLightColor)
+    {
+        const gui = new GUI();
 
+        const gameplay_options = gui.addFolder('gameplay_options')
+        gameplay_options.add(gameOptions, 'paddleMoveSpeed', 0.3, 2.0, 0.1)
+        gameplay_options.add(gameOptions, 'ballMoveSpeed', 0.05, 1, 0.01)
+
+        const light_options = gui.addFolder('light_options')
+        light_options.add(lightOptions, 'lightIntensity', 0.05, 50, 0.01).onChange(() => light.intensity = lightOptions.lightIntensity)
+        light_options.add(lightOptions, 'color_red', 0x0, 1, 0.01).onChange(setUpLightColor)
+        light_options.add(lightOptions, 'color_green', 0x0, 1, 0.01).onChange(setUpLightColor)
+        light_options.add(lightOptions, 'color_blue', 0x0, 1, 0.01).onChange(setUpLightColor)
+
+
+        const music_options = gui.addFolder('music_options');
+        music_options.add(soundOptions, 'ambientSoundVolume', 0, 1, 0.01).onChange(() => ambientSound.setVolume(soundOptions.ambientSoundVolume))
+        music_options.add(soundOptions, 'bounceSoundVolume', 0, 1, 0.01).onChange(() => bounceSound.setVolume(soundOptions.bounceSoundVolume))
+        music_options.add(soundOptions, 'refDistance', 0, 30, 0.01).onChange(() => bounceSound.setRefDistance(soundOptions.refDistance))
+
+    }
 
     function setUpLightColor() {
         light.color.set(lightOptions.color_red, lightOptions.color_green, lightOptions.color_blue)
@@ -126,17 +153,47 @@ export function initializeGame() {
 
     // create the PositionalAudio object (passing in the listener)
     const ambientSound = new THREE.Audio(listener);
+    const gameOverSound = new THREE.Audio(listener);
+    const bounceSound = new THREE.PositionalAudio(listener);
+    const brickSound = new THREE.PositionalAudio(listener);
+    const wallBounceSound = new THREE.PositionalAudio(listener);
+    const pointSound = new THREE.Audio(listener);
+
 
     const audioLoader = new THREE.AudioLoader();
     audioLoader.load('resources/sci-fi-ambient-music-183269.mp3', function (buffer) {
         ambientSound.setBuffer(buffer);
         ambientSound.setLoop(true);
-        ambientSound.setVolume(1)
+        ambientSound.setVolume(soundOptions.ambientSoundVolume);
         ambientSound.play();
     });
+    audioLoader.load('resources/boing-101318.mp3', function (buffer) {
+        bounceSound.setBuffer(buffer);
+        bounceSound.setRefDistance(soundOptions.refDistance);
+        bounceSound.setVolume(soundOptions.bounceSoundVolume);
+    })
+    paddle.add(bounceSound);
+    audioLoader.load('resources/point-in-space-36199.mp3', function (buffer) {
+        pointSound.setBuffer(buffer);
+        pointSound.setVolume(soundOptions.pointSoundVolume);
+    })
+    audioLoader.load('resources/destroyed_brick1.mp3', function (buffer) {
+        brickSound.setBuffer(buffer);
+        brickSound.setVolume(soundOptions.brickSoundVolume);
+        brickSound.setRefDistance(soundOptions.refDistance);
+    })
+    ball.mesh.add(brickSound);
+    audioLoader.load('resources/error-sound-39539.mp3', function (buffer) {
+        gameOverSound.setBuffer(buffer);
+        gameOverSound.setVolume(soundOptions.gameOverSoundVolume);
+    })
+    audioLoader.load('resources/wallHit.mp3', function (buffer) {
+        wallBounceSound.setBuffer(buffer);
+        wallBounceSound.setVolume(soundOptions.wallBounceSoundVolume);
+        wallBounceSound.setRefDistance(soundOptions.refDistance);
+    })
+    ball.mesh.add(wallBounceSound);
 
-
-    
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
 
@@ -158,9 +215,10 @@ export function initializeGame() {
 
     // Handle keyboard input
     function handleKeyDown(event) {
+        const key = event.key.toLowerCase(); // Convert the pressed key to lowercase
 
-        switch (event.key) {
-            case 'w'||'W':
+        switch (key) {
+            case 'w':
                 movePaddle('forward', gameOptions.paddleMoveSpeed);
                 break;
             case 'a':
@@ -172,9 +230,14 @@ export function initializeGame() {
             case 'd':
                 movePaddle('right', gameOptions.paddleMoveSpeed);
                 break;
-            case " ":
+            case ' ':
                 gamePaused ^= 1;
                 break;
+            case 'p':
+                console.log(`camera position: x${camera.position.x}, y${camera.position.y}, z${camera.position.z}`)
+                break;
+            case 'r':
+                console.log(`camera rotation: x${camera.rotation.x}, y${camera.rotation.y}, z${camera.rotation.z}`)
         }
         checkCollisionWithBoundaries(paddle, 1)
     }
@@ -184,7 +247,6 @@ export function initializeGame() {
     function restartGame() {
         // Remove the ball from the scene
         ball.mesh.position.copy(initialBallPosition);
-
         // Remove old bricks from the scene
         for (const brick of bricks) {
             scene.remove(brick);
@@ -193,6 +255,7 @@ export function initializeGame() {
         bricks = createBricks(5, 5, 5);
         gamePaused = true;
         scene.add(...bricks);
+        updateBrickLeft();
     }
 
 
@@ -228,14 +291,28 @@ export function initializeGame() {
 
 
     function removeBrick(hitBrickIndex) {
+        pointSound.stop();
+        pointSound.play();
         scene.remove(bricks.at(hitBrickIndex));
         bricks.splice(hitBrickIndex, 1);
         ball.velocity.y = -ball.velocity.y;
+        brickSound.stop();
+        brickSound.play();
+        addToScore(1);
+        updateBrickLeft(1);
     }
 
     function updateBall(delta) {
         updateBallPosition(delta);
         handleCollision();
+        updateBallColor()
+    }
+    function updateBallColor() {
+
+        let currentColor = new THREE.Color("hsl(0, 100%, 50%)")
+        ball.mesh.material.color.getHSL(currentColor);
+
+        ball.mesh.material.color.setHSL((currentColor.h + 0.001) % 1, currentColor.s, currentColor.l);
     }
 
     let gamePaused = true;
@@ -251,15 +328,32 @@ export function initializeGame() {
         renderer.render(scene, camera);
     };
     animate();
+    initUI();
 
-    function handleCollision(){
+    function handleCollision() {
 
-        if(1 === CheckCollisionWithPaddle(paddle, ball)){
+        if (1 === CheckCollisionWithPaddle(paddle, ball)) {
             paddle.material.color.setHex(Math.random() * 0xFFFFFF)
-            //bounceSound.play();
+            bounceSound.play();
+        }
+        const hitWall = checkCollisionWithBoundaries(ball.mesh, ball.radius);
+        if (hitWall !== "") {
+            wallBounceSound.stop();
+            wallBounceSound.play();
+            handleCollisionWithWall(hitWall);
+
+            return;
+            
         }
 
-        const hitWall = checkCollisionWithBoundaries(ball.mesh, ball.radius);
+        const hitBrickIndex = CheckCollisionWithBricks(ball.mesh, bricks);
+        if (hitBrickIndex !== -1) {
+            removeBrick(hitBrickIndex);
+        }
+    }
+
+
+    function handleCollisionWithWall(hitWall) {
         if (hitWall === "back" || hitWall === "front") {
             ball.velocity.z = -ball.velocity.z;
         } else if (hitWall === "left" || hitWall === "right") {
@@ -267,13 +361,15 @@ export function initializeGame() {
         } else if (hitWall === "up") {
             ball.velocity.y = -ball.velocity.y;
         } else if (hitWall === "down") {
-            restartGame();
-            gamePaused = true;
-        } else {
-            const hitBrickIndex = CheckCollisionWithBricks(ball.mesh, bricks);
-            if (hitBrickIndex !== -1) {
-                removeBrick(hitBrickIndex);
-            }
+            handleGameOver();
         }
+    }
+
+    function handleGameOver() {
+        gameOverSound.stop();
+        gameOverSound.play();
+        score = 0;
+        restartGame();
+        gamePaused = true;
     }
 }
