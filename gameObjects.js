@@ -60,7 +60,7 @@ export function createPaddle() {
 }
 export function createFloor(){
 
-    const planeSize = 100; // Adjust the size as needed
+    const planeSize = 1000; // Adjust the size as needed
     const planeGeometry = new THREE.PlaneGeometry(planeSize, planeSize, 10, 10);
     const textureLoader = new THREE.TextureLoader();
     const floorTexture = textureLoader.load('resources/Glow-Galaxy-Texture-Space-wallpaper_1600x1200.jpg'); // Replace with the path to your texture

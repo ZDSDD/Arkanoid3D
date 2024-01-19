@@ -10,14 +10,17 @@ export function CheckCollisionWithBricks(ball, bricks) {
     return -1;
 }
 
-export function CheckCollisionWithPaddle(paddle, ball) {
+export function CheckCollisionWithPaddle(paddle, ball){
     if (checkCollision(paddle, ball.mesh)) {
         ball.velocity.y = -ball.velocity.y;
         ball.mesh.position.y = paddle.position.y + 2;
         ball.velocity.x = ball.velocity.x + randFloat(-1,1);
         ball.velocity.z = ball.velocity.z + randFloat(-1,1);
+        return 1;
     }
+    return 0;
 }
+
 
 export function CheckCollisionWithBoundaries(object, radius) {
     if (object.position.x + radius > gameBoundaries.rightWall) {

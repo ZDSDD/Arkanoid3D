@@ -1,18 +1,19 @@
-import {Vector3} from 'three';
+import { Vector3 } from 'three';
 import {
     gameBoundaries, createFloor, createBall, createBricks, createPaddle
 } from './gameObjects';
 import * as THREE from "three";
-import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import Stats from 'three/addons/libs/stats.module.js';
-import {GUI} from 'three/addons/libs/lil-gui.module.min.js';
-import {CheckCollisionWithBoundaries, CheckCollisionWithBricks, CheckCollisionWithPaddle} from "./CollisionHandler";
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import { CheckCollisionWithBoundaries as checkCollisionWithBoundaries, CheckCollisionWithBricks, CheckCollisionWithPaddle } from "./CollisionHandler";
+import { AudioContext } from 'three';
 
 
 export function initializeGame() {
 
     let scene = new THREE.Scene();
-
+    scene.fog = new THREE.FogExp2(0x01131e, 0.025);
     let light = new THREE.DirectionalLight(0xFFFFFF, 2.0);
     light.position.set(20, 100, 10);
     light.target.position.set(0, 0, 0);
@@ -88,7 +89,7 @@ export function initializeGame() {
 
     const light_options = gui.addFolder('light_options')
     light_options.add(lightOptions, 'lightIntensity', 0.05, 50, 0.01).onChange(() => light.intensity = lightOptions.lightIntensity)
-    light_options.add(lightOptions, 'color_red', 0x0, 1, 0.01).onChange(setUpLightColor)
+    light_options.add(lightOptions, 'color_red', 0x0, 1, 0.01).name("Red color").onChange(setUpLightColor)
     light_options.add(lightOptions, 'color_green', 0x0, 1, 0.01).onChange(setUpLightColor)
     light_options.add(lightOptions, 'color_blue', 0x0, 1, 0.01).onChange(setUpLightColor)
 
@@ -107,6 +108,28 @@ export function initializeGame() {
     camera.rotateX(-.5)
     camera.position.y = 20;
 
+    // create an AudioListener and add it to the camera
+    const listener = new THREE.AudioListener();
+    camera.add(listener);
+
+    // create the PositionalAudio object (passing in the listener)
+    const ambientSound = new THREE.Audio(listener);
+
+    const audioLoader = new THREE.AudioLoader();
+    audioLoader.load('resources/sci-fi-ambient-music-183269.mp3', function (buffer) {
+        ambientSound.setBuffer(buffer);
+        ambientSound.setLoop(true);
+        ambientSound.setVolume(1)
+        ambientSound.play();
+    });
+
+// Assuming this is triggered by a button click
+document.getElementById('startButton').addEventListener('click', function() {
+    // Your audio playback code here
+    ambientSound.play();
+});
+
+    
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
 
@@ -126,11 +149,11 @@ export function initializeGame() {
         renderer.setSize(newWidth, newHeight);
     });
 
-// Handle keyboard input
+    // Handle keyboard input
     function handleKeyDown(event) {
 
         switch (event.key) {
-            case 'w':
+            case 'w'||'W':
                 movePaddle('forward', gameOptions.paddleMoveSpeed);
                 break;
             case 'a':
@@ -143,14 +166,10 @@ export function initializeGame() {
                 movePaddle('right', gameOptions.paddleMoveSpeed);
                 break;
             case " ":
-                gamePaused = false;
+                gamePaused ^= 1;
                 break;
-            case'r':
-                if (gameOver) {
-                    restartGame();
-                }
         }
-        CheckCollisionWithBoundaries(paddle, 1)
+        checkCollisionWithBoundaries(paddle, 1)
     }
 
     const initialBallPosition = new THREE.Vector3(0, gameBoundaries.floor + 5, 0);
@@ -165,7 +184,6 @@ export function initializeGame() {
         }
         bricks = []
         bricks = createBricks(5, 5, 5);
-        gameOver = false;
         gamePaused = true;
         scene.add(...bricks);
     }
@@ -194,10 +212,10 @@ export function initializeGame() {
 
     const clock = new THREE.Clock();
 
-    function UpdateBallPosition() {
+    function updateBallPosition(delta) {
         let moveDirection = new Vector3(0, 0, 0);
         moveDirection.copy(ball.velocity)
-        moveDirection.multiplyScalar(clock.getDelta() * (gameOptions.ballMoveSpeed));
+        moveDirection.multiplyScalar(delta * (gameOptions.ballMoveSpeed));
         ball.mesh.position.add(moveDirection);
     }
 
@@ -208,12 +226,34 @@ export function initializeGame() {
         ball.velocity.y = -ball.velocity.y;
     }
 
-    let gameOver = false;
+    function updateBall(delta) {
+        updateBallPosition(delta);
+        handleCollision();
+    }
 
-    function updateBall() {
-        UpdateBallPosition();
-        CheckCollisionWithPaddle(paddle, ball);
-        const hitWall = CheckCollisionWithBoundaries(ball.mesh, ball.radius);
+    let gamePaused = true;
+    // Game loop
+    const animate = () => {
+        let delta = clock.getDelta()
+        requestAnimationFrame(animate);
+        if (!gamePaused) {
+            updateBall(delta);
+        }
+        controls.update();
+        stats.update();
+        renderer.render(scene, camera);
+    };
+
+    animate();
+
+    function handleCollision(){
+
+        if(1 === CheckCollisionWithPaddle(paddle, ball)){
+            paddle.material.color.setHex(Math.random() * 0xFFFFFF)
+            sound.play();
+        }
+
+        const hitWall = checkCollisionWithBoundaries(ball.mesh, ball.radius);
         if (hitWall === "back" || hitWall === "front") {
             ball.velocity.z = -ball.velocity.z;
         } else if (hitWall === "left" || hitWall === "right") {
@@ -223,7 +263,6 @@ export function initializeGame() {
         } else if (hitWall === "down") {
             restartGame();
             gamePaused = true;
-            gameOver = true;
         } else {
             const hitBrickIndex = CheckCollisionWithBricks(ball.mesh, bricks);
             if (hitBrickIndex !== -1) {
@@ -231,18 +270,4 @@ export function initializeGame() {
             }
         }
     }
-
-    let gamePaused = true;
-    // Game loop
-    const animate = () => {
-        requestAnimationFrame(animate);
-        if (!gamePaused) {
-            updateBall();
-        }
-        controls.update();
-        stats.update();
-        renderer.render(scene, camera);
-    };
-
-    animate();
 }
