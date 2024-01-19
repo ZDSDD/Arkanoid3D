@@ -12,12 +12,14 @@ import { AudioContext } from 'three';
 
 export function initializeGame() {
     let score = 0;
+    let bestScore = 0;
 
     const scoreElement = document.getElementById('score-container')
 
     function addToScore(points) {
         score += points;
-        scoreElement.innerHTML = `<span style="color: #ffcc00;">Score:</span> ${score}`;
+        scoreElement.innerHTML = `Score:<span style="color: #ffcc00;">${score}</span> 
+            <span style="color: #deface;">best score: </span>${bestScore}`;
     }
 
     const brickLeftElement = document.getElementById('brick-left-container');
@@ -28,7 +30,7 @@ export function initializeGame() {
     }
 
     function updateBrickLeft() {
-        brickLeftElement.innerHTML = `<span style="color: #deface;">bricks left</span>: ${bricks.length}`
+        brickLeftElement.innerHTML = `<span style="color: #deface;">bricks left:</span> ${bricks.length}`
     }
 
     let scene = new THREE.Scene();
@@ -343,7 +345,7 @@ export function initializeGame() {
             handleCollisionWithWall(hitWall);
 
             return;
-            
+
         }
 
         const hitBrickIndex = CheckCollisionWithBricks(ball.mesh, bricks);
@@ -351,6 +353,7 @@ export function initializeGame() {
             removeBrick(hitBrickIndex);
         }
     }
+
 
 
     function handleCollisionWithWall(hitWall) {
@@ -368,7 +371,11 @@ export function initializeGame() {
     function handleGameOver() {
         gameOverSound.stop();
         gameOverSound.play();
+        if (score > bestScore){
+            bestScore = score;
+        }
         score = 0;
+        initUI();
         restartGame();
         gamePaused = true;
     }
