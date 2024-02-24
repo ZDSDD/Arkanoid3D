@@ -1,20 +1,34 @@
 import { Vector3 } from 'three';
 import {
-    gameBoundaries, createFloor, createBall, createBricks, createPaddle
+    gameBoundaries,
+    createFloor,
+    createBall,
+    createBricks,
+    createPaddle,
 } from './gameObjects';
-import * as THREE from "three";
+import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import Stats from 'three/addons/libs/stats.module.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-import { CheckCollisionWithBoundaries as checkCollisionWithBoundaries, CheckCollisionWithBricks, CheckCollisionWithPaddle } from "./CollisionHandler";
+import {
+    CheckCollisionWithBoundaries as checkCollisionWithBoundaries,
+    CheckCollisionWithBricks,
+    CheckCollisionWithPaddle,
+} from './CollisionHandler';
 import { AudioContext } from 'three';
 
-
+import ambientSoundUrl from './resources/sci-fi-ambient-music-183269.mp3';
+import bounceSoundUrl from './resources/boing-101318.mp3';
+import gameOverSoundUrl from './resources/error-sound-39539.mp3';
+import brickSoundUrl from './resources/destroyed_brick1.mp3';
+import wallBounceSoundUrl from './resources/wallHit.mp3';
+import pointSoundUrl from './resources/point-in-space-36199.mp3';
+import backgroundUrl from './resources/jpegPIA15482.jpg';
 export function initializeGame() {
     let score = 0;
     let bestScore = 0;
 
-    const scoreElement = document.getElementById('score-container')
+    const scoreElement = document.getElementById('score-container');
 
     function addToScore(points) {
         score += points;
@@ -26,16 +40,16 @@ export function initializeGame() {
 
     function initUI() {
         addToScore(0);
-        updateBrickLeft()
+        updateBrickLeft();
     }
 
     function updateBrickLeft() {
-        brickLeftElement.innerHTML = `<span style="color: #deface;">bricks left:</span> ${bricks.length}`
+        brickLeftElement.innerHTML = `<span style="color: #deface;">bricks left:</span> ${bricks.length}`;
     }
 
     let scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x01131e, 0.005);
-    let light = new THREE.DirectionalLight(0xFFFFFF, 2.0);
+    let light = new THREE.DirectionalLight(0xffffff, 2.0);
     light.position.set(20, 100, 10);
     light.target.position.set(0, 0, 0);
     light.castShadow = true;
@@ -55,15 +69,12 @@ export function initializeGame() {
     let ambientLight = new THREE.AmbientLight(0x101010, 5);
     scene.add(ambientLight);
 
-
     const loader = new THREE.TextureLoader();
-    const texture = loader.load(
-        'resources/jpegPIA15482.jpg',
-        () => {
-            texture.mapping = THREE.EquirectangularReflectionMapping;
-            texture.colorSpace = THREE.SRGBColorSpace;
-            scene.background = texture;
-        });
+    const texture = loader.load(backgroundUrl, () => {
+        texture.mapping = THREE.EquirectangularReflectionMapping;
+        texture.colorSpace = THREE.SRGBColorSpace;
+        scene.background = texture;
+    });
 
     let ballRadius = 1;
     let initialBallVelocity = new Vector3(0, 10, 0);
@@ -89,19 +100,17 @@ export function initializeGame() {
     const stats = new Stats();
     document.body.appendChild(stats.dom);
 
-
     let gameOptions = {
         paddleMoveSpeed: 1.1,
-        ballMoveSpeed: 0.7
-    }
+        ballMoveSpeed: 0.7,
+    };
 
     let lightOptions = {
         lightIntensity: 1,
         color_red: 1,
         color_green: 1,
-        color_blue: 1
-
-    }
+        color_blue: 1,
+    };
     let soundOptions = {
         ambientSoundVolume: 0.5,
         bounceSoundVolume: 0.3,
@@ -109,34 +118,56 @@ export function initializeGame() {
         wallBounceSoundVolume: 1.0,
         refDistance: 20,
         pointSoundVolume: 0.3,
-        brickSoundVolume: 0.3
-    }
+        brickSoundVolume: 0.3,
+    };
 
     // GUI
 
     {
         const gui = new GUI();
 
-        const gameplay_options = gui.addFolder('gameplay_options')
-        gameplay_options.add(gameOptions, 'paddleMoveSpeed', 0.3, 2.0, 0.1)
-        gameplay_options.add(gameOptions, 'ballMoveSpeed', 0.05, 1, 0.01)
+        const gameplay_options = gui.addFolder('gameplay_options');
+        gameplay_options.add(gameOptions, 'paddleMoveSpeed', 0.3, 2.0, 0.1);
+        gameplay_options.add(gameOptions, 'ballMoveSpeed', 0.05, 1, 0.01);
 
-        const light_options = gui.addFolder('light_options')
-        light_options.add(lightOptions, 'lightIntensity', 0.05, 50, 0.01).onChange(() => light.intensity = lightOptions.lightIntensity)
-        light_options.add(lightOptions, 'color_red', 0x0, 1, 0.01).onChange(setUpLightColor)
-        light_options.add(lightOptions, 'color_green', 0x0, 1, 0.01).onChange(setUpLightColor)
-        light_options.add(lightOptions, 'color_blue', 0x0, 1, 0.01).onChange(setUpLightColor)
-
+        const light_options = gui.addFolder('light_options');
+        light_options
+            .add(lightOptions, 'lightIntensity', 0.05, 50, 0.01)
+            .onChange(() => (light.intensity = lightOptions.lightIntensity));
+        light_options
+            .add(lightOptions, 'color_red', 0x0, 1, 0.01)
+            .onChange(setUpLightColor);
+        light_options
+            .add(lightOptions, 'color_green', 0x0, 1, 0.01)
+            .onChange(setUpLightColor);
+        light_options
+            .add(lightOptions, 'color_blue', 0x0, 1, 0.01)
+            .onChange(setUpLightColor);
 
         const music_options = gui.addFolder('music_options');
-        music_options.add(soundOptions, 'ambientSoundVolume', 0, 1, 0.01).onChange(() => ambientSound.setVolume(soundOptions.ambientSoundVolume))
-        music_options.add(soundOptions, 'bounceSoundVolume', 0, 1, 0.01).onChange(() => bounceSound.setVolume(soundOptions.bounceSoundVolume))
-        music_options.add(soundOptions, 'refDistance', 0, 30, 0.01).onChange(() => bounceSound.setRefDistance(soundOptions.refDistance))
-
+        music_options
+            .add(soundOptions, 'ambientSoundVolume', 0, 1, 0.01)
+            .onChange(() =>
+                ambientSound.setVolume(soundOptions.ambientSoundVolume)
+            );
+        music_options
+            .add(soundOptions, 'bounceSoundVolume', 0, 1, 0.01)
+            .onChange(() =>
+                bounceSound.setVolume(soundOptions.bounceSoundVolume)
+            );
+        music_options
+            .add(soundOptions, 'refDistance', 0, 30, 0.01)
+            .onChange(() =>
+                bounceSound.setRefDistance(soundOptions.refDistance)
+            );
     }
 
     function setUpLightColor() {
-        light.color.set(lightOptions.color_red, lightOptions.color_green, lightOptions.color_blue)
+        light.color.set(
+            lightOptions.color_red,
+            lightOptions.color_green,
+            lightOptions.color_blue
+        );
     }
 
     const camera = new THREE.PerspectiveCamera(
@@ -146,7 +177,7 @@ export function initializeGame() {
         1000
     );
     camera.position.z = 30;
-    camera.rotateX(-.5)
+    camera.rotateX(-0.5);
     camera.position.y = 20;
 
     // create an AudioListener and add it to the camera
@@ -161,39 +192,38 @@ export function initializeGame() {
     const wallBounceSound = new THREE.PositionalAudio(listener);
     const pointSound = new THREE.Audio(listener);
 
-
     const audioLoader = new THREE.AudioLoader();
-    audioLoader.load('resources/sci-fi-ambient-music-183269.mp3', function (buffer) {
+    audioLoader.load(ambientSoundUrl, function (buffer) {
         ambientSound.setBuffer(buffer);
         ambientSound.setLoop(true);
         ambientSound.setVolume(soundOptions.ambientSoundVolume);
         ambientSound.play();
     });
-    audioLoader.load('resources/boing-101318.mp3', function (buffer) {
+    audioLoader.load(bounceSoundUrl, function (buffer) {
         bounceSound.setBuffer(buffer);
         bounceSound.setRefDistance(soundOptions.refDistance);
         bounceSound.setVolume(soundOptions.bounceSoundVolume);
-    })
+    });
     paddle.add(bounceSound);
-    audioLoader.load('resources/point-in-space-36199.mp3', function (buffer) {
+    audioLoader.load(pointSoundUrl, function (buffer) {
         pointSound.setBuffer(buffer);
         pointSound.setVolume(soundOptions.pointSoundVolume);
-    })
-    audioLoader.load('resources/destroyed_brick1.mp3', function (buffer) {
+    });
+    audioLoader.load(brickSoundUrl, function (buffer) {
         brickSound.setBuffer(buffer);
         brickSound.setVolume(soundOptions.brickSoundVolume);
         brickSound.setRefDistance(soundOptions.refDistance);
-    })
+    });
     ball.mesh.add(brickSound);
-    audioLoader.load('resources/error-sound-39539.mp3', function (buffer) {
+    audioLoader.load(gameOverSoundUrl, function (buffer) {
         gameOverSound.setBuffer(buffer);
         gameOverSound.setVolume(soundOptions.gameOverSoundVolume);
-    })
-    audioLoader.load('resources/wallHit.mp3', function (buffer) {
+    });
+    audioLoader.load(wallBounceSoundUrl, function (buffer) {
         wallBounceSound.setBuffer(buffer);
         wallBounceSound.setVolume(soundOptions.wallBounceSoundVolume);
         wallBounceSound.setRefDistance(soundOptions.refDistance);
-    })
+    });
     ball.mesh.add(wallBounceSound);
 
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -202,10 +232,10 @@ export function initializeGame() {
     scene.add(ball.mesh, paddle, floor, ...bricks);
 
     // Handle keyboard input
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
 
     // Handle window resize
-    window.addEventListener("resize", () => {
+    window.addEventListener('resize', () => {
         const newWidth = window.innerWidth;
         const newHeight = window.innerHeight;
 
@@ -236,15 +266,23 @@ export function initializeGame() {
                 gamePaused ^= 1;
                 break;
             case 'p':
-                console.log(`camera position: x${camera.position.x}, y${camera.position.y}, z${camera.position.z}`)
+                console.log(
+                    `camera position: x${camera.position.x}, y${camera.position.y}, z${camera.position.z}`
+                );
                 break;
             case 'r':
-                console.log(`camera rotation: x${camera.rotation.x}, y${camera.rotation.y}, z${camera.rotation.z}`)
+                console.log(
+                    `camera rotation: x${camera.rotation.x}, y${camera.rotation.y}, z${camera.rotation.z}`
+                );
         }
-        checkCollisionWithBoundaries(paddle, 1)
+        checkCollisionWithBoundaries(paddle, 1);
     }
 
-    const initialBallPosition = new THREE.Vector3(0, gameBoundaries.floor + 5, 0);
+    const initialBallPosition = new THREE.Vector3(
+        0,
+        gameBoundaries.floor + 5,
+        0
+    );
 
     function restartGame() {
         // Remove the ball from the scene
@@ -253,16 +291,14 @@ export function initializeGame() {
         for (const brick of bricks) {
             scene.remove(brick);
         }
-        bricks = []
+        bricks = [];
         bricks = createBricks(5, 5, 5);
         gamePaused = true;
         scene.add(...bricks);
         updateBrickLeft();
     }
 
-
     function movePaddle(direction, speed) {
-
         switch (direction) {
             case 'forward':
                 paddle.position.z -= speed;
@@ -279,18 +315,16 @@ export function initializeGame() {
         }
     }
 
-    window.addEventListener("keydown", handleKeyDown);
-
+    window.addEventListener('keydown', handleKeyDown);
 
     const clock = new THREE.Clock();
 
     function updateBallPosition(delta) {
         let moveDirection = new Vector3(0, 0, 0);
-        moveDirection.copy(ball.velocity)
-        moveDirection.multiplyScalar(delta * (gameOptions.ballMoveSpeed));
+        moveDirection.copy(ball.velocity);
+        moveDirection.multiplyScalar(delta * gameOptions.ballMoveSpeed);
         ball.mesh.position.add(moveDirection);
     }
-
 
     function removeBrick(hitBrickIndex) {
         pointSound.stop();
@@ -307,20 +341,23 @@ export function initializeGame() {
     function updateBall(delta) {
         updateBallPosition(delta);
         handleCollision();
-        updateBallColor()
+        updateBallColor();
     }
     function updateBallColor() {
-
-        let currentColor = new THREE.Color("hsl(0, 100%, 50%)")
+        let currentColor = new THREE.Color('hsl(0, 100%, 50%)');
         ball.mesh.material.color.getHSL(currentColor);
 
-        ball.mesh.material.color.setHSL((currentColor.h + 0.001) % 1, currentColor.s, currentColor.l);
+        ball.mesh.material.color.setHSL(
+            (currentColor.h + 0.001) % 1,
+            currentColor.s,
+            currentColor.l
+        );
     }
 
     let gamePaused = true;
     // Game loop
     const animate = () => {
-        let delta = clock.getDelta()
+        let delta = clock.getDelta();
         requestAnimationFrame(animate);
         if (!gamePaused) {
             updateBall(delta);
@@ -333,19 +370,17 @@ export function initializeGame() {
     initUI();
 
     function handleCollision() {
-
         if (1 === CheckCollisionWithPaddle(paddle, ball)) {
-            paddle.material.color.setHex(Math.random() * 0xFFFFFF)
+            paddle.material.color.setHex(Math.random() * 0xffffff);
             bounceSound.play();
         }
         const hitWall = checkCollisionWithBoundaries(ball.mesh, ball.radius);
-        if (hitWall !== "") {
+        if (hitWall !== '') {
             wallBounceSound.stop();
             wallBounceSound.play();
             handleCollisionWithWall(hitWall);
 
             return;
-
         }
 
         const hitBrickIndex = CheckCollisionWithBricks(ball.mesh, bricks);
@@ -354,16 +389,14 @@ export function initializeGame() {
         }
     }
 
-
-
     function handleCollisionWithWall(hitWall) {
-        if (hitWall === "back" || hitWall === "front") {
+        if (hitWall === 'back' || hitWall === 'front') {
             ball.velocity.z = -ball.velocity.z;
-        } else if (hitWall === "left" || hitWall === "right") {
+        } else if (hitWall === 'left' || hitWall === 'right') {
             ball.velocity.x = -ball.velocity.x;
-        } else if (hitWall === "up") {
+        } else if (hitWall === 'up') {
             ball.velocity.y = -ball.velocity.y;
-        } else if (hitWall === "down") {
+        } else if (hitWall === 'down') {
             handleGameOver();
         }
     }
@@ -371,7 +404,7 @@ export function initializeGame() {
     function handleGameOver() {
         gameOverSound.stop();
         gameOverSound.play();
-        if (score > bestScore){
+        if (score > bestScore) {
             bestScore = score;
         }
         score = 0;
