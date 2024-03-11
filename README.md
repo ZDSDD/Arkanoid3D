@@ -4,7 +4,14 @@
 ## About The Project
 
 It's a Arkanoid clone made in 3D using Three.js library. 
+
 ![Screenshot 2024-03-11 at 18-29-45 My first three js app](https://github.com/ZDSDD/Arkanoid3D/assets/106777224/0af41714-abaa-4826-90e4-674e9503678f)
+
+# If you just want to play it :-)
+
+### You can play it -----> [here](https://zdsdd.github.io/Arkanoid3D/) <-----
+
+## To play with code or build the project on your local machine
 
 ### Prerequisites
 
