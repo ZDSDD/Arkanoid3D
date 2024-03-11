@@ -1,5 +1,5 @@
 <a name="readme-top"></a>
-
+![Workflow](https://github.com/ZDSDD/Arkanoid3D/actions/workflows/deploy.yml/badge.svg)
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
