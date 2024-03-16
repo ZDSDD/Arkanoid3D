@@ -40,3 +40,5 @@ It's an Arkanoid clone made in 3D using Three.js library.
 5. In your internet browser, enter the address shown after 'Local: '. For me, it was: 'http://localhost:5173/'
    ![Zrzut ekranu 2024-03-11 184155](https://github.com/ZDSDD/Arkanoid3D/assets/106777224/aa15aa1a-2f91-4f9e-af7a-0fa5216680e3)
 
+## Contributing
+
